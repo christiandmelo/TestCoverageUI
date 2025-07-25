@@ -24,8 +24,8 @@ namespace TestCoverageUI.Services
         Log("Iniciando geração de cobertura...");
 
         // Validar caminhos ou usar embutidos
-        string openCoverPath = ResolveToolPath(_config.OpenCoverPath, "OpenCover.Console.exe");
-        string reportGenPath = ResolveToolPath(_config.ReportGeneratorPath, "reportgenerator.exe");
+        string openCoverPath = ResolveToolPath(_config.OpenCoverPath);
+        string reportGenPath = ResolveToolPath(_config.ReportGeneratorPath);
 
         if (!File.Exists(openCoverPath))
         {
@@ -100,27 +100,18 @@ namespace TestCoverageUI.Services
     /// <summary>
     /// Resolve se usa o caminho definido pelo usuário ou o executável embutido.
     /// </summary>
-    private string ResolveToolPath(string userPath, string embeddedFileName)
+    private string ResolveToolPath(string userPath)
     {
-      // Se usuário definiu caminho válido, usa ele
-      if (!string.IsNullOrWhiteSpace(userPath) && File.Exists(userPath))
-        return userPath;
-
-      if (_config.UseEmbeddedTools)
+      // Se o caminho for relativo, converte para absoluto
+      if (!string.IsNullOrWhiteSpace(userPath) && !Path.IsPathRooted(userPath))
       {
-        // Caminho onde extrairemos os executáveis embutidos
-        string embeddedDir = Path.Combine(AppContext.BaseDirectory, "Tools");
-        string embeddedExe = Path.Combine(embeddedDir, embeddedFileName);
-
-        if (!Directory.Exists(embeddedDir))
-          Directory.CreateDirectory(embeddedDir);
-
-        // TODO: Extrair executável embutido do recurso (faremos depois)
-        return embeddedExe;
+        string baseDir = AppContext.BaseDirectory;
+        userPath = Path.Combine(baseDir, userPath);
       }
 
       return userPath;
     }
+
 
     /// <summary>
     /// Executa um processo externo e redireciona a saída para o log.

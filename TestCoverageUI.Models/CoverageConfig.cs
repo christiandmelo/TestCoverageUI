@@ -17,9 +17,11 @@ namespace TestCoverageUI.Models
     public bool UseEmbeddedTools { get; set; } = true;
 
     private static string ConfigDirectory =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "TestCoverageUI");
+    AppContext.BaseDirectory;
 
-    private static string ConfigPath => Path.Combine(ConfigDirectory, "config.json");
+    private static string ConfigPath =>
+        Path.Combine(ConfigDirectory, "config.json");
+
 
     public static CoverageConfig LoadConfig()
     {
@@ -41,8 +43,8 @@ namespace TestCoverageUI.Models
       {
         var defaultConfig = new CoverageConfig
         {
-          OpenCoverPath = string.Empty, // Pode ficar em branco para ser configurado
-          ReportGeneratorPath = string.Empty,
+          OpenCoverPath = "Tools\\OpenCover\\OpenCover.Console.exe",
+          ReportGeneratorPath = "Tools\\ReportGenerator\\net8.0\\reportgenerator.exe",
           VSTestPath = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\Common7\\IDE\\CommonExtensions\\Microsoft\\TestWindow\\vstest.console.exe",
           BinPath = "C:\\RM\\Atual\\Release\\Bin",
           PrefixDll = "RM.Cst",
