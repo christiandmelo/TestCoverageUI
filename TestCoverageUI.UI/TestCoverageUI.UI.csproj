@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <StartupObject>TestCoverageUI.UI.Program</StartupObject>
+    <PackageIcon>Icone_Logo_png.png</PackageIcon>
+    <AssemblyName>TestCoverageUI</AssemblyName>
+    <ApplicationIcon>Resources\Icone_Logo_ico.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\Icone_Logo_ico.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3351.48" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TestCoverageUI.Models\TestCoverageUI.Models.csproj" />
+    <ProjectReference Include="..\TestCoverageUI.Services\TestCoverageUI.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Resources\Icone_Logo_png.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
