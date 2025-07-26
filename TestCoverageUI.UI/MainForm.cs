@@ -8,7 +8,8 @@ namespace TestCoverageUI.UI
 {
   public partial class MainForm : Form
   {
-    private CoverageConfig _config;
+    private ProfilesConfig _profilesConfig;
+    private CoverageProfile _selectedProfile;
 
     public MainForm()
     {
@@ -18,8 +19,16 @@ namespace TestCoverageUI.UI
 
     private void LoadConfig()
     {
-      _config = CoverageConfig.LoadConfig();
-      txtBinPath.Text = _config.BinPath;
+      _profilesConfig = ProfilesConfig.Load();
+      comboProfiles.Items.Clear();
+
+      foreach (var name in _profilesConfig.GetProfileNames())
+      {
+        comboProfiles.Items.Add(name);
+      }
+
+      if (comboProfiles.Items.Count > 0)
+        comboProfiles.SelectedIndex = 0;
     }
 
     private void AppendLog(string message, Color color)
@@ -51,8 +60,6 @@ namespace TestCoverageUI.UI
       txtLog.ScrollToCaret();
     }
 
-
-
     private void ConfiguracoesMenuItem_Click(object sender, EventArgs e)
     {
       using (var configForm = new ConfigForm())
@@ -64,17 +71,31 @@ namespace TestCoverageUI.UI
       }
     }
 
+    private void comboProfiles_SelectedIndexChanged(object sender, EventArgs e)
+    {
+      var profileName = comboProfiles.SelectedItem?.ToString();
+      if (string.IsNullOrEmpty(profileName))
+        return;
+
+      _selectedProfile = _profilesConfig.GetProfile(profileName);
+      txtBinPath.Text = _selectedProfile.BinPath;
+    }
+
     private async void BtnGerarRelatorio_Click(object sender, EventArgs e)
     {
-      // Limpar log e ir para aba Log
+      if (_selectedProfile == null)
+      {
+        AppendLog("Nenhum perfil selecionado.", Color.Red);
+        return;
+      }
+
+      // Limpar log e ir para aba de Log
       txtLog.Clear();
       tabControl.SelectedTab = tabLog;
-
-      // Desabilitar botão durante execução
       btnGerarRelatorio.Enabled = false;
 
-      // Criar serviço com callback para atualizar log
-      var service = new CoverageService(_config, log =>
+      // Executa o serviço
+      var service = new CoverageService(_selectedProfile, log =>
       {
         Color color = Color.White;
 
@@ -90,13 +111,10 @@ namespace TestCoverageUI.UI
         AppendLog(log, color);
       });
 
-      // Executar cobertura
       string? reportPath = await service.GenerateCoverageAsync();
 
-      // Reabilitar botão
       btnGerarRelatorio.Enabled = true;
 
-      // Se gerou relatório com sucesso, trocar para aba Relatório
       if (!string.IsNullOrEmpty(reportPath) && File.Exists(reportPath))
       {
         await webViewRelatorio.EnsureCoreWebView2Async(null);
@@ -105,9 +123,41 @@ namespace TestCoverageUI.UI
       }
       else
       {
-        // Caso de erro: permanece na aba Log
-        txtLog.AppendText("Falha ao gerar relatório.\r\n");
+        tabControl.SelectedTab = tabLog;
+        AppendLog("Falha ao gerar relatório.", Color.Red);
       }
     }
+
+    private void menuEditarPerfil_Click(object sender, EventArgs e)
+    {
+      string perfilSelecionado = comboProfiles.SelectedItem?.ToString();
+      if (string.IsNullOrEmpty(perfilSelecionado))
+      {
+        MessageBox.Show("Selecione um perfil para editar.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        return;
+      }
+
+      using (var configForm = new ConfigForm(perfilSelecionado))
+      {
+        if (configForm.ShowDialog() == DialogResult.OK)
+        {
+          LoadConfig();
+          comboProfiles.SelectedItem = perfilSelecionado; // mantém seleção
+        }
+      }
+    }
+
+    private void menuNovoPerfil_Click(object sender, EventArgs e)
+    {
+      using (var configForm = new ConfigForm()) // sem parâmetros → novo perfil
+      {
+        if (configForm.ShowDialog() == DialogResult.OK)
+        {
+          LoadConfig();
+        }
+      }
+    }
+
+
   }
 }

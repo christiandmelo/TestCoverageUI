@@ -1,29 +1,26 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using TestCoverageUI.Models;
 
 namespace TestCoverageUI.Services
 {
   public class CoverageService
   {
-    private readonly CoverageConfig _config;
+    private readonly CoverageProfile _config;
     private readonly Action<string> _logCallback;
 
-    public CoverageService(CoverageConfig config, Action<string> logCallback)
+    public CoverageService(CoverageProfile config, Action<string> logCallback)
     {
       _config = config;
       _logCallback = logCallback;
     }
 
-    /// <summary>
-    /// Executa o fluxo de geração de cobertura.
-    /// </summary>
     public async Task<string?> GenerateCoverageAsync()
     {
       try
       {
         Log("Iniciando geração de cobertura...");
 
-        // Validar caminhos ou usar embutidos
         string openCoverPath = ResolveToolPath(_config.OpenCoverPath);
         string reportGenPath = ResolveToolPath(_config.ReportGeneratorPath);
 
@@ -46,13 +43,13 @@ namespace TestCoverageUI.Services
         if (File.Exists(coverageXml)) File.Delete(coverageXml);
         if (Directory.Exists(reportFolder)) Directory.Delete(reportFolder, true);
 
-        // Procurar DLLs de teste
+        // Procurar DLLs
         string pattern = $"{_config.PrefixDll}*{_config.SuffixDll}.dll";
         string[] dlls = Directory.GetFiles(_config.BinPath, pattern, SearchOption.TopDirectoryOnly);
 
         if (dlls.Length == 0)
         {
-          Log("Nenhuma DLL encontrada com o padrão especificado.");
+          Log("Nenhuma DLL de teste encontrada.");
           return null;
         }
 
@@ -97,12 +94,8 @@ namespace TestCoverageUI.Services
       }
     }
 
-    /// <summary>
-    /// Resolve se usa o caminho definido pelo usuário ou o executável embutido.
-    /// </summary>
     private string ResolveToolPath(string userPath)
     {
-      // Se o caminho for relativo, converte para absoluto
       if (!string.IsNullOrWhiteSpace(userPath) && !Path.IsPathRooted(userPath))
       {
         string baseDir = AppContext.BaseDirectory;
@@ -112,10 +105,6 @@ namespace TestCoverageUI.Services
       return userPath;
     }
 
-
-    /// <summary>
-    /// Executa um processo externo e redireciona a saída para o log.
-    /// </summary>
     private async Task<bool> RunProcessAsync(string exePath, string arguments)
     {
       Log($"> {exePath} {arguments}");
@@ -128,25 +117,13 @@ namespace TestCoverageUI.Services
         RedirectStandardError = true,
         UseShellExecute = false,
         CreateNoWindow = true,
-
-        // CORREÇÃO DE ENCODING
-        StandardOutputEncoding = System.Text.Encoding.UTF8,
-        StandardErrorEncoding = System.Text.Encoding.UTF8
+        StandardOutputEncoding = Encoding.UTF8,
+        StandardErrorEncoding = Encoding.UTF8
       };
 
       var process = new Process { StartInfo = psi };
-
-      process.OutputDataReceived += (s, e) =>
-      {
-        if (e.Data != null)
-          Log(e.Data);
-      };
-
-      process.ErrorDataReceived += (s, e) =>
-      {
-        if (e.Data != null)
-          Log($"[ERRO] {e.Data}");
-      };
+      process.OutputDataReceived += (s, e) => { if (e.Data != null) Log(e.Data); };
+      process.ErrorDataReceived += (s, e) => { if (e.Data != null) Log($"[ERRO] {e.Data}"); };
 
       process.Start();
       process.BeginOutputReadLine();
@@ -156,7 +133,6 @@ namespace TestCoverageUI.Services
 
       return process.ExitCode == 0;
     }
-
 
     private void Log(string message)
     {

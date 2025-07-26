@@ -1,30 +1,54 @@
 ﻿using TestCoverageUI.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TestCoverageUI.UI
 {
   public partial class ConfigForm : Form
   {
-    private CoverageConfig _config;
+    private CoverageProfile _editingProfile;
+    private bool _isEditing = false;
 
     public ConfigForm()
     {
       InitializeComponent();
-      LoadConfig();
+
+      txtOpenCover.Text = "Tools\\OpenCover\\OpenCover.Console.exe";
+      txtReportGen.Text = "Tools\\ReportGenerator\\net8.0\\reportgenerator.exe";
+      txtVSTest.Text = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Professional\\Common7\\IDE\\CommonExtensions\\Microsoft\\TestWindow\\vstest.console.exe";
     }
 
-    private void LoadConfig()
+    public ConfigForm(string profileName)
     {
-      _config = CoverageConfig.LoadConfig();
+      InitializeComponent();
 
-      txtOpenCover.Text = _config.OpenCoverPath;
-      txtReportGen.Text = _config.ReportGeneratorPath;
-      txtVSTest.Text = _config.VSTestPath;
-      txtBinPath.Text = _config.BinPath;
-      txtPrefixDll.Text = _config.PrefixDll;
-      txtSuffixDll.Text = _config.SuffixDll;
-      chkUseEmbedded.Checked = _config.UseEmbeddedTools;
+      var config = ProfilesConfig.Load();
+      _editingProfile = config.GetProfile(profileName);
+
+      if (_editingProfile != null)
+      {
+        _isEditing = true;
+        PreencherCampos(_editingProfile);
+      }
+    }
+
+    private void PreencherCampos(CoverageProfile profile)
+    {
+      txtProfileName.Text = profile.Name;
+      txtOpenCover.Text = profile.OpenCoverPath;
+      txtReportGen.Text = profile.ReportGeneratorPath;
+      txtVSTest.Text = profile.VSTestPath;
+      txtBinPath.Text = profile.BinPath;
+      txtPrefixDll.Text = profile.PrefixDll;
+      txtSuffixDll.Text = profile.SuffixDll;
+      chkUseEmbedded.Checked = profile.UseEmbeddedTools;
+
+      // Bloqueia o nome do perfil se estiver editando (evita renomear sem querer)
+      if (_isEditing)
+        txtProfileName.ReadOnly = false;
+
       EnabledOrNotExeInputs();
     }
+
 
     private void EnabledOrNotExeInputs()
     {
@@ -44,18 +68,31 @@ namespace TestCoverageUI.UI
 
     private void BtnSave_Click(object sender, EventArgs e)
     {
-      _config.OpenCoverPath = txtOpenCover.Text;
-      _config.ReportGeneratorPath = txtReportGen.Text;
-      _config.VSTestPath = txtVSTest.Text;
-      _config.BinPath = txtBinPath.Text;
-      _config.PrefixDll = txtPrefixDll.Text;
-      _config.SuffixDll = txtSuffixDll.Text;
-      _config.UseEmbeddedTools = chkUseEmbedded.Checked;
+      if (string.IsNullOrWhiteSpace(txtProfileName.Text))
+      {
+        MessageBox.Show("Informe um nome para o perfil.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        return;
+      }
 
-      CoverageConfig.SaveConfig(_config);
+      var profile = new CoverageProfile
+      {
+        Name = txtProfileName.Text.Trim(),
+        OpenCoverPath = txtOpenCover.Text.Trim(),
+        ReportGeneratorPath = txtReportGen.Text.Trim(),
+        VSTestPath = txtVSTest.Text.Trim(),
+        BinPath = txtBinPath.Text.Trim(),
+        PrefixDll = txtPrefixDll.Text.Trim(),
+        SuffixDll = txtSuffixDll.Text.Trim(),
+        UseEmbeddedTools = chkUseEmbedded.Checked
+      };
+
+      var config = ProfilesConfig.Load();
+      config.AddOrUpdateProfile(profile);
+
       this.DialogResult = DialogResult.OK;
-      Close();
+      this.Close();
     }
+
 
     private void BtnCancel_Click(object sender, EventArgs e)
     {

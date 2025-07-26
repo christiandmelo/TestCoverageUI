@@ -14,7 +14,7 @@ namespace TestCoverageUI.UI
       // see https://aka.ms/applicationconfiguration.
       ApplicationConfiguration.Initialize();
 
-      CoverageConfig.EnsureConfigExists();
+      ProfilesConfig.EnsureConfigExists();
 
       Application.Run(new MainForm());
     }

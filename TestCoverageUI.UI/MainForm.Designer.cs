@@ -6,8 +6,9 @@ namespace TestCoverageUI.UI
   {
     private System.ComponentModel.IContainer components = null;
     private MenuStrip menuStrip;
-    private ToolStripMenuItem configuracoesMenuItem;
-    private Label lblBinPath;
+    private ToolStripMenuItem menuNovoPerfil;
+    private ToolStripMenuItem menuEditarPerfil;
+    private ComboBox comboProfiles;
     private TextBox txtBinPath;
     private Button btnGerarRelatorio;
     private TabControl tabControl;
@@ -29,8 +30,9 @@ namespace TestCoverageUI.UI
     {
       System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
       menuStrip = new MenuStrip();
-      configuracoesMenuItem = new ToolStripMenuItem();
-      lblBinPath = new Label();
+      menuNovoPerfil = new ToolStripMenuItem();
+      menuEditarPerfil = new ToolStripMenuItem();
+      comboProfiles = new ComboBox();
       txtBinPath = new TextBox();
       btnGerarRelatorio = new Button();
       tabControl = new TabControl();
@@ -48,39 +50,47 @@ namespace TestCoverageUI.UI
       // menuStrip
       // 
       menuStrip.ImageScalingSize = new Size(20, 20);
-      menuStrip.Items.AddRange(new ToolStripItem[] { configuracoesMenuItem });
+      menuStrip.Items.AddRange(new ToolStripItem[] { menuNovoPerfil, menuEditarPerfil });
       menuStrip.Location = new Point(0, 0);
       menuStrip.Name = "menuStrip";
-      menuStrip.Size = new Size(940, 28);
+      menuStrip.Size = new Size(979, 28);
       menuStrip.TabIndex = 0;
       // 
-      // configuracoesMenuItem
+      // menuNovoPerfil
       // 
-      configuracoesMenuItem.Name = "configuracoesMenuItem";
-      configuracoesMenuItem.Size = new Size(118, 24);
-      configuracoesMenuItem.Text = "Configurações";
-      configuracoesMenuItem.Click += ConfiguracoesMenuItem_Click;
+      menuNovoPerfil.Name = "menuNovoPerfil";
+      menuNovoPerfil.Size = new Size(168, 26);
+      menuNovoPerfil.Text = "Novo Perfil";
+      menuNovoPerfil.Click += menuNovoPerfil_Click;
       // 
-      // lblBinPath
+      // menuEditarPerfil
       // 
-      lblBinPath.AutoSize = true;
-      lblBinPath.Location = new Point(12, 40);
-      lblBinPath.Name = "lblBinPath";
-      lblBinPath.Size = new Size(124, 20);
-      lblBinPath.TabIndex = 1;
-      lblBinPath.Text = "Pasta de Binários:";
+      menuEditarPerfil.Name = "menuEditarPerfil";
+      menuEditarPerfil.Size = new Size(168, 26);
+      menuEditarPerfil.Text = "Editar Perfil";
+      menuEditarPerfil.Click += menuEditarPerfil_Click;
+      // 
+      // comboProfiles
+      // 
+      comboProfiles.DropDownStyle = ComboBoxStyle.DropDownList;
+      comboProfiles.FormattingEnabled = true;
+      comboProfiles.Location = new Point(16, 36);
+      comboProfiles.Name = "comboProfiles";
+      comboProfiles.Size = new Size(284, 28);
+      comboProfiles.TabIndex = 0;
+      comboProfiles.SelectedIndexChanged += comboProfiles_SelectedIndexChanged;
       // 
       // txtBinPath
       // 
-      txtBinPath.Location = new Point(134, 37);
+      txtBinPath.Location = new Point(303, 37);
       txtBinPath.Name = "txtBinPath";
       txtBinPath.ReadOnly = true;
-      txtBinPath.Size = new Size(628, 27);
+      txtBinPath.Size = new Size(495, 27);
       txtBinPath.TabIndex = 2;
       // 
       // btnGerarRelatorio
       // 
-      btnGerarRelatorio.Location = new Point(768, 37);
+      btnGerarRelatorio.Location = new Point(804, 37);
       btnGerarRelatorio.Name = "btnGerarRelatorio";
       btnGerarRelatorio.Size = new Size(140, 29);
       btnGerarRelatorio.TabIndex = 3;
@@ -95,7 +105,7 @@ namespace TestCoverageUI.UI
       tabControl.Location = new Point(12, 70);
       tabControl.Name = "tabControl";
       tabControl.SelectedIndex = 0;
-      tabControl.Size = new Size(900, 512);
+      tabControl.Size = new Size(939, 512);
       tabControl.TabIndex = 4;
       // 
       // tabRelatorio
@@ -103,7 +113,7 @@ namespace TestCoverageUI.UI
       tabRelatorio.Controls.Add(webViewRelatorio);
       tabRelatorio.Location = new Point(4, 29);
       tabRelatorio.Name = "tabRelatorio";
-      tabRelatorio.Size = new Size(892, 479);
+      tabRelatorio.Size = new Size(931, 479);
       tabRelatorio.TabIndex = 0;
       tabRelatorio.Text = "Relatório";
       // 
@@ -113,9 +123,9 @@ namespace TestCoverageUI.UI
       webViewRelatorio.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
       webViewRelatorio.CreationProperties = null;
       webViewRelatorio.DefaultBackgroundColor = Color.White;
-      webViewRelatorio.Location = new Point(0, 0);
+      webViewRelatorio.Location = new Point(3, 0);
       webViewRelatorio.Name = "webViewRelatorio";
-      webViewRelatorio.Size = new Size(892, 479);
+      webViewRelatorio.Size = new Size(925, 479);
       webViewRelatorio.TabIndex = 0;
       webViewRelatorio.ZoomFactor = 1D;
       // 
@@ -144,11 +154,11 @@ namespace TestCoverageUI.UI
       // 
       // MainForm
       // 
-      ClientSize = new Size(940, 612);
+      ClientSize = new Size(979, 612);
       Controls.Add(menuStrip);
-      Controls.Add(lblBinPath);
       Controls.Add(txtBinPath);
       Controls.Add(btnGerarRelatorio);
+      Controls.Add(comboProfiles);
       Controls.Add(tabControl);
       Icon = (Icon)resources.GetObject("$this.Icon");
       MainMenuStrip = menuStrip;
