@@ -59,14 +59,14 @@ namespace TestCoverageUI.UI
       // menuNovoPerfil
       // 
       menuNovoPerfil.Name = "menuNovoPerfil";
-      menuNovoPerfil.Size = new Size(168, 26);
+      menuNovoPerfil.Size = new Size(96, 24);
       menuNovoPerfil.Text = "Novo Perfil";
       menuNovoPerfil.Click += menuNovoPerfil_Click;
       // 
       // menuEditarPerfil
       // 
       menuEditarPerfil.Name = "menuEditarPerfil";
-      menuEditarPerfil.Size = new Size(168, 26);
+      menuEditarPerfil.Size = new Size(99, 24);
       menuEditarPerfil.Text = "Editar Perfil";
       menuEditarPerfil.Click += menuEditarPerfil_Click;
       // 
@@ -134,7 +134,7 @@ namespace TestCoverageUI.UI
       tabLog.Controls.Add(txtLog);
       tabLog.Location = new Point(4, 29);
       tabLog.Name = "tabLog";
-      tabLog.Size = new Size(892, 479);
+      tabLog.Size = new Size(931, 479);
       tabLog.TabIndex = 1;
       tabLog.Text = "Log";
       // 
@@ -148,7 +148,7 @@ namespace TestCoverageUI.UI
       txtLog.Location = new Point(0, 0);
       txtLog.Name = "txtLog";
       txtLog.ReadOnly = true;
-      txtLog.Size = new Size(892, 479);
+      txtLog.Size = new Size(931, 479);
       txtLog.TabIndex = 0;
       txtLog.Text = "";
       // 
@@ -166,6 +166,7 @@ namespace TestCoverageUI.UI
       StartPosition = FormStartPosition.CenterScreen;
       Text = "TestCoverageUI";
       WindowState = FormWindowState.Maximized;
+      Load += MainForm_Load;
       menuStrip.ResumeLayout(false);
       menuStrip.PerformLayout();
       tabControl.ResumeLayout(false);

@@ -62,3 +62,5 @@ EBWebView/
 
 # Dump de memória
 *.dmp
+/publish-updater/Updater.exe
+/publish-updater/Updater.pdb

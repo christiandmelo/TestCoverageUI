@@ -99,7 +99,7 @@ namespace TestCoverageUI.UI
       {
         Color color = Color.White;
 
-        if (log.Contains("Passed") || log.Contains("Successful") || log.Contains("Aprovado"))
+        if (log.Contains("Passed") || log.Contains("Successful") || log.Contains("Aprovado") || log.Contains("sucedida"))
           color = Color.Green;
         else if (log.Contains("Erro") || log.Contains("Falha") || log.Contains("error"))
           color = Color.Red;
@@ -107,8 +107,10 @@ namespace TestCoverageUI.UI
           color = Color.Cyan;
         else if (log.Contains("..."))
           color = Color.Yellow;
+        else if (log.Contains("Cannot"))
+          color = Color.Orange;
 
-        AppendLog(log, color);
+          AppendLog(log, color);
       });
 
       string? reportPath = await service.GenerateCoverageAsync();
@@ -158,6 +160,27 @@ namespace TestCoverageUI.UI
       }
     }
 
+    private async void MainForm_Load(object sender, EventArgs e)
+    {
+      var updater = new UpdateService();
 
+      // Verifica se há atualização
+      var updateInfo = await updater.CheckForUpdateAsync();
+
+      if (updateInfo != null)
+      {
+        var result = MessageBox.Show(
+            $"Nova versão disponível ({updateInfo.version}). Deseja atualizar agora?",
+            "Atualização disponível",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question
+        );
+
+        if (result == DialogResult.Yes)
+        {
+          await updater.DownloadAndRunUpdaterAsync(updateInfo.url);
+        }
+      }
+    }
   }
 }
