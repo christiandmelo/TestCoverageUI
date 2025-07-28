@@ -64,3 +64,4 @@ EBWebView/
 *.dmp
 /publish-updater/Updater.exe
 /publish-updater/Updater.pdb
+/TestCoverageUI/*
