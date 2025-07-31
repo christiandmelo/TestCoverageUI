@@ -193,5 +193,20 @@ namespace TestCoverageUI.UI
       }
     }
 
+    private void menuApagarDlls_Click(object sender, EventArgs e)
+    {
+      try
+      {
+        var service = new DllCleanupService();
+        service.ApagarDllsComFiltro(_selectedProfile.BinPath, _selectedProfile.PrefixDll, _selectedProfile.SuffixDll);
+
+        MessageBox.Show("DLLs apagadas com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+      }
+      catch (Exception ex)
+      {
+        MessageBox.Show($"Erro ao apagar DLLs: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      }
+    }
+
   }
 }

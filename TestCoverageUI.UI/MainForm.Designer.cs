@@ -32,6 +32,7 @@ namespace TestCoverageUI.UI
       menuStrip = new MenuStrip();
       menuNovoPerfil = new ToolStripMenuItem();
       menuEditarPerfil = new ToolStripMenuItem();
+      menuApagarDlls = new ToolStripMenuItem();
       comboProfiles = new ComboBox();
       txtBinPath = new TextBox();
       btnGerarRelatorio = new Button();
@@ -50,7 +51,7 @@ namespace TestCoverageUI.UI
       // menuStrip
       // 
       menuStrip.ImageScalingSize = new Size(20, 20);
-      menuStrip.Items.AddRange(new ToolStripItem[] { menuNovoPerfil, menuEditarPerfil });
+      menuStrip.Items.AddRange(new ToolStripItem[] { menuNovoPerfil, menuEditarPerfil, menuApagarDlls });
       menuStrip.Location = new Point(0, 0);
       menuStrip.Name = "menuStrip";
       menuStrip.Size = new Size(979, 28);
@@ -69,6 +70,13 @@ namespace TestCoverageUI.UI
       menuEditarPerfil.Size = new Size(99, 24);
       menuEditarPerfil.Text = "Editar Perfil";
       menuEditarPerfil.Click += menuEditarPerfil_Click;
+      // 
+      // menuApagarDlls
+      // 
+      menuApagarDlls.Name = "menuApagarDlls";
+      menuApagarDlls.Size = new Size(104, 24);
+      menuApagarDlls.Text = "Apagar Dll's";
+      menuApagarDlls.Click += menuApagarDlls_Click;
       // 
       // comboProfiles
       // 
@@ -176,5 +184,7 @@ namespace TestCoverageUI.UI
       ResumeLayout(false);
       PerformLayout();
     }
+
+    private ToolStripMenuItem menuApagarDlls;
   }
 }
