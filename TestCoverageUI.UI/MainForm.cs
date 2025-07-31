@@ -164,23 +164,34 @@ namespace TestCoverageUI.UI
     {
       var updater = new UpdateService();
 
-      // Verifica se há atualização
-      var updateInfo = await updater.CheckForUpdateAsync();
-
-      if (updateInfo != null)
+      try
       {
-        var result = MessageBox.Show(
-            $"Nova versão disponível ({updateInfo.version}). Deseja atualizar agora?",
-            "Atualização disponível",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question
-        );
+        var updateInfo = await updater.CheckForUpdateAsync();
 
-        if (result == DialogResult.Yes)
+        if (updateInfo != null)
         {
-          await updater.DownloadAndRunUpdaterAsync(updateInfo.url);
+          var result = MessageBox.Show(
+              $"Nova versão disponível ({updateInfo.version}). Deseja atualizar agora?",
+              "Atualização disponível",
+              MessageBoxButtons.YesNo,
+              MessageBoxIcon.Question
+          );
+
+          if (result == DialogResult.Yes)
+          {
+            await updater.DownloadAndRunUpdaterAsync(updateInfo.url);
+          }
         }
       }
+      catch (FileNotFoundException ex)
+      {
+        MessageBox.Show(ex.Message, "Erro de atualização", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      }
+      catch (Exception ex)
+      {
+        MessageBox.Show($"Erro inesperado: {ex.Message}", "Erro de atualização", MessageBoxButtons.OK, MessageBoxIcon.Error);
+      }
     }
+
   }
 }

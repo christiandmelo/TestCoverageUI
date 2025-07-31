@@ -54,12 +54,25 @@ namespace TestCoverageUI.Services
       var data = await http.GetByteArrayAsync(downloadUrl);
       await File.WriteAllBytesAsync(tempZip, data);
 
-      string updaterPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Updater.exe");
-      string exePath = Environment.ProcessPath!; // Caminho do executável atual
+      string updaterPath = Path.Combine(AppContext.BaseDirectory, "Updater.exe");
 
-      Process.Start(updaterPath, $"\"{tempZip}\" \"{exePath}\"");
-      Environment.Exit(0); // Fecha o app
+      if (!File.Exists(updaterPath))
+      {
+        throw new FileNotFoundException($"Updater.exe não encontrado no caminho esperado: {updaterPath}");
+      }
+
+      string exePath = Environment.ProcessPath!;
+
+      Process.Start(new ProcessStartInfo
+      {
+        FileName = updaterPath,
+        Arguments = $"\"{tempZip}\" \"{exePath}\"",
+        UseShellExecute = true
+      });
+
+      Environment.Exit(0);
     }
+
 
     private bool IsNewerVersion(string current, string latest)
     {
