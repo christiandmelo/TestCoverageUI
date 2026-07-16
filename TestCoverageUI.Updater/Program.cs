@@ -54,7 +54,7 @@ namespace TestCoverageUI.Updater
         ZipFile.ExtractToDirectory(zipPath, tempExtractPath, true);
 
         // 4. Copiar arquivos ignorando o Updater.exe
-        string currentUpdaterName = Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName);
+        string currentUpdaterName = Path.GetFileName(Process.GetCurrentProcess().MainModule!.FileName);
 
         foreach (var file in Directory.GetFiles(tempExtractPath, "*", SearchOption.AllDirectories))
         {

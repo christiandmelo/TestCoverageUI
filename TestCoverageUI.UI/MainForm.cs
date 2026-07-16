@@ -8,8 +8,8 @@ namespace TestCoverageUI.UI
 {
   public partial class MainForm : Form
   {
-    private ProfilesConfig _profilesConfig;
-    private CoverageProfile _selectedProfile;
+    private ProfilesConfig _profilesConfig = null!;
+    private CoverageProfile? _selectedProfile;
 
     public MainForm()
     {
@@ -78,7 +78,8 @@ namespace TestCoverageUI.UI
         return;
 
       _selectedProfile = _profilesConfig.GetProfile(profileName);
-      txtBinPath.Text = _selectedProfile.BinPath;
+      if (_selectedProfile != null)
+        txtBinPath.Text = _selectedProfile.BinPath;
     }
 
     private async void BtnGerarRelatorio_Click(object sender, EventArgs e)
@@ -134,7 +135,7 @@ namespace TestCoverageUI.UI
 
     private void menuEditarPerfil_Click(object sender, EventArgs e)
     {
-      string perfilSelecionado = comboProfiles.SelectedItem?.ToString();
+      string? perfilSelecionado = comboProfiles.SelectedItem?.ToString();
       if (string.IsNullOrEmpty(perfilSelecionado))
       {
         MessageBox.Show("Selecione um perfil para editar.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -197,6 +198,12 @@ namespace TestCoverageUI.UI
 
     private void menuApagarDlls_Click(object sender, EventArgs e)
     {
+      if (_selectedProfile == null)
+      {
+        MessageBox.Show("Nenhum perfil selecionado.", "Atenção", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        return;
+      }
+
       try
       {
         var service = new DllCleanupService();

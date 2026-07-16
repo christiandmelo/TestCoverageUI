@@ -5,7 +5,7 @@ namespace TestCoverageUI.UI
 {
   public partial class ConfigForm : Form
   {
-    private CoverageProfile _editingProfile;
+    private CoverageProfile? _editingProfile;
     private bool _isEditing = false;
 
     public ConfigForm()
