@@ -120,7 +120,9 @@ namespace TestCoverageUI.UI
       if (!string.IsNullOrEmpty(reportPath) && File.Exists(reportPath))
       {
         await webViewRelatorio.EnsureCoreWebView2Async(null);
-        webViewRelatorio.Source = new Uri(reportPath);
+        // Navigate (ao contrário de atribuir Source) sempre recarrega, mesmo que a URI seja
+        // igual à já carregada — necessário porque o relatório é sempre escrito no mesmo caminho
+        webViewRelatorio.CoreWebView2.Navigate(new Uri(reportPath).AbsoluteUri);
         tabControl.SelectedTab = tabRelatorio;
       }
       else
