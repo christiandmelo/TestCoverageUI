@@ -55,6 +55,7 @@ namespace TestCoverageUI.Updater
 
         // 4. Copiar arquivos ignorando o Updater.exe
         string currentUpdaterName = Path.GetFileName(Process.GetCurrentProcess().MainModule!.FileName);
+        int falhas = 0;
 
         foreach (var file in Directory.GetFiles(tempExtractPath, "*", SearchOption.AllDirectories))
         {
@@ -71,22 +72,37 @@ namespace TestCoverageUI.Updater
           string relativePath = Path.GetRelativePath(tempExtractPath, file);
           string destFile = Path.Combine(targetDir, relativePath);
 
-          // Garantir que a pasta exista
-          Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
+          try
+          {
+            // Garantir que a pasta exista
+            Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
 
-          // Copiar substituindo
-          File.Copy(file, destFile, true);
-          Console.WriteLine($"Atualizado: {relativePath}");
+            // Um arquivo antigo marcado como somente-leitura impede a sobrescrita mesmo com overwrite:true
+            if (File.Exists(destFile))
+              File.SetAttributes(destFile, FileAttributes.Normal);
+
+            // Copiar substituindo
+            File.Copy(file, destFile, true);
+            Console.WriteLine($"Atualizado: {relativePath}");
+          }
+          catch (Exception ex)
+          {
+            falhas++;
+            Console.WriteLine($"[AVISO] Falha ao atualizar {relativePath}: {ex.Message}");
+          }
         }
 
         // 5. Limpar pasta temporária
         Directory.Delete(tempExtractPath, true);
 
+        if (falhas > 0)
+          Console.WriteLine($"Atualização concluída com {falhas} arquivo(s) não atualizado(s) (veja avisos acima).");
+        else
+          Console.WriteLine("Atualização concluída com sucesso.");
+
         // 6. Iniciar aplicação atualizada
         Console.WriteLine("Iniciando aplicação atualizada...");
         Process.Start(targetExePath);
-
-        Console.WriteLine("Atualização concluída com sucesso.");
       }
       catch (Exception ex)
       {

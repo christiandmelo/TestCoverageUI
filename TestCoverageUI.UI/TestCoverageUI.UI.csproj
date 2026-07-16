@@ -10,9 +10,9 @@
     <PackageIcon>Icone_Logo_png.png</PackageIcon>
     <AssemblyName>TestCoverageUI</AssemblyName>
     <ApplicationIcon>Resources\Icone_Logo_ico.ico</ApplicationIcon>
-    <Version>1.0.3</Version>
-    <AssemblyVersion>1.0.3</AssemblyVersion>
-    <FileVersion>1.0.3</FileVersion>
+    <Version>1.0.4</Version>
+    <AssemblyVersion>1.0.4</AssemblyVersion>
+    <FileVersion>1.0.4</FileVersion>
     <!-- O pacote Microsoft.Web.WebView2 referencia a variante WPF (WindowsBase) mesmo em projetos
          WinForms; o WindowsBase 4.0.0.0 escolhido automaticamente é o correto, o aviso é ruído -->
     <NoWarn>$(NoWarn);MSB3277</NoWarn>
