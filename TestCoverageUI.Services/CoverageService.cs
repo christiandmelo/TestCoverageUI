@@ -53,9 +53,40 @@ namespace TestCoverageUI.Services
           return null;
         }
 
+        string filter = $"+[{_config.PrefixDll}*]* -[*{_config.SuffixDll}]*";
+
+        string preloaderPath = Path.Combine(AppContext.BaseDirectory, "Preloader.exe");
+
+        if (!File.Exists(preloaderPath))
+        {
+          Log("ERRO: Preloader não encontrado.");
+          return null;
+        }
+
         // Executar OpenCover para cada DLL
         foreach (var dll in dlls)
         {
+          // Pré-carregar apenas as DLLs de produção do próprio projeto sendo testado
+          // (ex.: "RM.Cst.DataPrev.LicencaRemunerada"), não todas as DLLs do BinPath,
+          // para que apareçam no relatório mesmo que nenhum teste as toque diretamente
+          string baseName = Path.GetFileNameWithoutExtension(dll);
+          if (baseName.EndsWith(_config.SuffixDll, StringComparison.OrdinalIgnoreCase))
+            baseName = baseName.Substring(0, baseName.Length - _config.SuffixDll.Length);
+
+          Log($"Pré-carregando DLLs de {baseName}...");
+
+          string preloadArgs = $"-register:user " +
+                               $"-target:\"{preloaderPath}\" " +
+                               $"-targetargs:\"\\\"{_config.BinPath}\\\" \\\"{baseName}\\\"\" " +
+                               $"-output:\"{coverageXml}\" " +
+                               $"-mergeoutput " +
+                               $"-filter:\"+[{baseName}*]* -[*{_config.SuffixDll}]*\" " +
+                               $"-log:All";
+
+          bool preloadSuccess = await RunProcessAsync(openCoverPath, preloadArgs);
+          if (!preloadSuccess)
+            return null;
+
           Log($"Executando cobertura para: {Path.GetFileName(dll)}");
 
           string arguments = $"-register:user " +
@@ -63,7 +94,7 @@ namespace TestCoverageUI.Services
                              $"-targetargs:\"\\\"{dll}\\\" --logger:trx\" " +
                              $"-output:\"{coverageXml}\" " +
                              $"-mergeoutput " +
-                             $"-filter:\"+[{_config.PrefixDll}*]* -[*.{_config.SuffixDll}]*\" " +
+                             $"-filter:\"{filter}\" " +
                              $"-log:All";
 
           bool success = await RunProcessAsync(openCoverPath, arguments);

@@ -43,4 +43,12 @@
     <Copy SourceFiles="$(SolutionDir)publish-updater\Updater.exe" DestinationFolder="$(OutDir)" />
   </Target>
 
+  <Target Name="CopyPreloaderAfterBuild" AfterTargets="Build">
+    <!-- Builda o Preloader (net472, sem publish/RID pois roda sob o profiler do OpenCover) -->
+    <Exec Command="dotnet build &quot;$(SolutionDir)TestCoverageUI.Preloader\TestCoverageUI.Preloader.csproj&quot; -c $(Configuration)" />
+
+    <!-- Copia o Preloader.exe compilado para a pasta bin do TestCoverageUI -->
+    <Copy SourceFiles="$(SolutionDir)TestCoverageUI.Preloader\bin\$(Configuration)\net472\Preloader.exe" DestinationFolder="$(OutDir)" />
+  </Target>
+
 </Project>
