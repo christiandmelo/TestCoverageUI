@@ -174,7 +174,6 @@ namespace TestCoverageUI.UI
       StartPosition = FormStartPosition.CenterScreen;
       Text = "TestCoverageUI";
       WindowState = FormWindowState.Maximized;
-      Load += MainForm_Load;
       menuStrip.ResumeLayout(false);
       menuStrip.PerformLayout();
       tabControl.ResumeLayout(false);

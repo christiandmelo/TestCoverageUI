@@ -28,6 +28,7 @@ publish/
 # Arquivos de configuração locais
 appsettings.*.json
 config.json
+configs.json
 
 # Arquivos de sistema
 Thumbs.db

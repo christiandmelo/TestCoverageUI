@@ -36,9 +36,12 @@ namespace TestCoverageUI.Services
           return null;
         }
 
-        // Limpar arquivos anteriores
-        string coverageXml = Path.Combine(Environment.CurrentDirectory, "coverage.xml");
-        string reportFolder = Path.Combine(Environment.CurrentDirectory, "coverage-report");
+        // Limpar arquivos anteriores. Pasta fixa em %LOCALAPPDATA%, não Environment.CurrentDirectory:
+        // o diretório de trabalho varia conforme quem inicia o exe (ex.: o Updater relança sem
+        // definir WorkingDirectory), fazendo o relatório às vezes cair num diretório arbitrário.
+        Directory.CreateDirectory(CaminhoConfig.PastaSaida);
+        string coverageXml = Path.Combine(CaminhoConfig.PastaSaida, "coverage.xml");
+        string reportFolder = Path.Combine(CaminhoConfig.PastaSaida, "coverage-report");
 
         if (File.Exists(coverageXml)) File.Delete(coverageXml);
         if (Directory.Exists(reportFolder)) Directory.Delete(reportFolder, true);

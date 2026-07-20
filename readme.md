@@ -110,44 +110,9 @@ Exemplo de filtro padrão usado:
 
 ## Build para distribuição
 
-Publicar uma nova versão é um único comando, via PowerShell:
+Este repositório é um submódulo do [apps-cm](https://github.com/christiandmelo/apps), o shell que centraliza e distribui todas as ferramentas do time. A distribuição (release, versionamento e auto-update) é feita a partir de lá — `AppsCm.exe` é o único executável publicado aos usuários, e hospeda o `MainForm` deste projeto reparenteado numa aba. Ver o `Release.ps1` e o `CLAUDE.md` na raiz do apps-cm para o fluxo de release.
 
-```powershell
-.\Release.ps1 -Version 1.0.3
-```
-
-O script:
-
-1. Atualiza o número da versão em `TestCoverageUI.UI/TestCoverageUI.UI.csproj`, `TestCoverageUI.Services/TestCoverageUI.Services.csproj` e `version.json` (os três precisam estar sincronizados para a atualização automática do app funcionar corretamente).
-2. Roda `dotnet publish`, que já gera a aplicação completa — incluindo `Updater.exe`, `Preloader.exe` e a pasta `Tools` (OpenCover + ReportGenerator), sem nenhuma cópia manual.
-3. Compacta o resultado em `TestCoverageUI.zip`, na raiz do repositório.
-
-O script **não** commita, dá push nem cria a release no GitHub — esses passos continuam manuais.
-
-### Passo a passo para publicar a próxima versão
-
-Supondo que a versão atual seja `1.0.3` e a próxima seja `1.0.4`:
-
-```powershell
-# 1. Gera a versão (atualiza os 3 arquivos de versão, publica e zipa)
-.\Release.ps1 -Version 1.0.4
-
-# 2. Confere o que mudou e commita
-git add TestCoverageUI.UI/TestCoverageUI.UI.csproj TestCoverageUI.Services/TestCoverageUI.Services.csproj version.json
-git commit -m "Bump de versão para 1.0.4"
-
-# 3. Sobe pro GitHub
-git push origin main
-```
-
-4. Crie a release no GitHub na tag `1.0.4`, anexando o `TestCoverageUI.zip` gerado na raiz do repositório:
-   - Pelo site: **Releases → Draft a new release**, tag `1.0.4`, anexar `TestCoverageUI.zip` e publicar.
-   - Ou via [GitHub CLI](https://cli.github.com/):
-     ```bash
-     gh release create 1.0.4 TestCoverageUI.zip --title "1.0.4" --notes "Descrição das mudanças"
-     ```
-
-O nome do arquivo anexado precisa ser exatamente `TestCoverageUI.zip` e a tag precisa bater com o número de versão — é isso que a `url` em `version.json` (`.../releases/download/{versão}/TestCoverageUI.zip`) espera para o auto-update funcionar.
+Para desenvolvimento standalone deste repositório isoladamente, `dotnet publish TestCoverageUI.UI -c Release -r win-x64 --self-contained false -o publish` continua funcionando (inclui `Preloader.exe` e a pasta `Tools` automaticamente).
 
 ---
 

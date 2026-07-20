@@ -1,5 +1,3 @@
-using TestCoverageUI.Models;
-
 namespace TestCoverageUI.UI
 {
   internal static class Program
@@ -13,8 +11,6 @@ namespace TestCoverageUI.UI
       // To customize application configuration such as set high DPI settings or default font,
       // see https://aka.ms/applicationconfiguration.
       ApplicationConfiguration.Initialize();
-
-      ProfilesConfig.EnsureConfigExists();
 
       Application.Run(new MainForm());
     }

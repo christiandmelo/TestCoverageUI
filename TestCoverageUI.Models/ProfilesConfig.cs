@@ -6,17 +6,27 @@ namespace TestCoverageUI.Models
   {
     public List<CoverageProfile> Profiles { get; set; } = new();
 
-    private static string ConfigPath =>
-        Path.Combine(AppContext.BaseDirectory, "configs.json");
+    private static string ConfigPath => CaminhoConfig.Arquivo;
 
     public static ProfilesConfig Load()
     {
-      string json = File.ReadAllText(ConfigPath);
-      return JsonSerializer.Deserialize<ProfilesConfig>(json) ?? new ProfilesConfig();
+      if (!File.Exists(ConfigPath))
+        return new ProfilesConfig();
+
+      try
+      {
+        string json = File.ReadAllText(ConfigPath);
+        return JsonSerializer.Deserialize<ProfilesConfig>(json) ?? new ProfilesConfig();
+      }
+      catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+      {
+        return new ProfilesConfig();
+      }
     }
 
     public static void Save(ProfilesConfig config)
     {
+      Directory.CreateDirectory(CaminhoConfig.Pasta);
       string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
       File.WriteAllText(ConfigPath, json);
     }
@@ -50,6 +60,8 @@ namespace TestCoverageUI.Models
 
     public static void EnsureConfigExists()
     {
+      CaminhoConfig.MigrarSeNecessario();
+
       if (!File.Exists(ConfigPath))
       {
         // Cria perfil padrão

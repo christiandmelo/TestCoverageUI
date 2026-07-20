@@ -8,11 +8,13 @@ Uma interface desktop em Windows Forms (.NET 8) para rodar cobertura de testes .
 
 O projeto não é uma biblioteca — ele orquestra executáveis externos via `Process`. A maior parte dos bugs está na montagem das strings de argumento e na resolução de caminhos, não no C#.
 
+Este repositório é um **submódulo do [apps-cm](https://github.com/christiandmelo/apps)**, o shell que centraliza e distribui todas as ferramentas do time. Ele continua compilando e rodando standalone (útil para desenvolvimento), mas o executável distribuído aos usuários finais é o `AppsCm.exe` do apps-cm, que hospeda o `MainForm` deste projeto reparenteado dentro de uma aba.
+
 ## Comandos
 
 ```bash
 dotnet restore
-dotnet build TestCoverageUI.sln                       # também publica o Updater (ver abaixo)
+dotnet build TestCoverageUI.sln
 dotnet run --project TestCoverageUI.UI                # rodar em desenvolvimento
 dotnet publish TestCoverageUI.UI -c Release -r win-x64 --self-contained false -o publish
 ```
@@ -21,43 +23,41 @@ dotnet publish TestCoverageUI.UI -c Release -r win-x64 --self-contained false -o
 
 ## Arquitetura
 
-Quatro projetos, em camadas bem definidas (`UI → Services → Models`; o `Updater` é independente):
+Três projetos, em camadas bem definidas (`UI → Services → Models`), mais o `Preloader`, que é um helper standalone:
 
-- **TestCoverageUI.Models** — `CoverageProfile` (uma configuração nomeada) e `ProfilesConfig` (a lista, junto com a própria lógica de carregar/salvar/semear o JSON). A persistência mora no próprio model; não há repositório nem container de injeção de dependência em lugar nenhum.
-- **TestCoverageUI.Services** — `CoverageService` (o pipeline OpenCover/ReportGenerator), `UpdateService` (verificação de atualização) e `DllCleanupService` (apaga em lote as DLLs que casam com prefixo/sufixo na pasta bin).
-- **TestCoverageUI.UI** — `MainForm` (seletor de perfil, aba de log, aba de relatório) e `ConfigForm` (editor de perfil). O assembly é renomeado para `TestCoverageUI.exe`.
-- **TestCoverageUI.Updater** — console app single-file separado (`Updater.exe`). Precisa ser um processo à parte porque sobrescreve os binários da aplicação principal enquanto ela está fechando.
+- **TestCoverageUI.Models** — `CoverageProfile` (uma configuração nomeada), `ProfilesConfig` (a lista, com a lógica de carregar/salvar/semear o JSON) e `CaminhoConfig` (resolve o diretório de configuração em `%LOCALAPPDATA%\apps-cm\test-coverage\` e migra um `configs.json` legado que ficava ao lado do exe). A persistência mora no próprio model; não há repositório nem container de injeção de dependência em lugar nenhum.
+- **TestCoverageUI.Services** — `CoverageService`, o pipeline OpenCover/ReportGenerator, e `DllCleanupService`, que apaga em lote as DLLs que casam com prefixo/sufixo na pasta bin.
+- **TestCoverageUI.UI** — `MainForm` (seletor de perfil, aba de log, aba de relatório) e `ConfigForm` (editor de perfil). O assembly é renomeado para `TestCoverageUI.exe`. Note que, quando hospedado pelo shell (`apps-cm`), esse `.exe` nunca chega a rodar — o shell referencia o projeto e reparenteia o `MainForm` diretamente.
+- **TestCoverageUI.Preloader** — `.exe` separado (`net472`) invocado como processo filho pelo `CoverageService` para pré-carregar DLLs de produção antes do profiler do OpenCover entrar em ação. Precisa ser um processo à parte porque roda sob o profiler.
 
 ### Pipeline de cobertura (`CoverageService.GenerateCoverageAsync`)
 
-Busca `{PrefixDll}*{SuffixDll}.dll` no `BinPath`, roda o OpenCover **uma vez por DLL de teste** com `-mergeoutput` acumulando tudo em um único `coverage.xml`, e por fim roda o ReportGenerator uma vez sobre esse XML. As saídas caem em `Environment.CurrentDirectory` (`coverage.xml`, `coverage-report/index.htm`) — ou seja, relativas ao diretório de trabalho, e não ao `BinPath` do perfil. Retorna o caminho do relatório ou `null`; todo caminho de falha registra no log e retorna `null` em vez de lançar exceção.
+Busca `{PrefixDll}*{SuffixDll}.dll` no `BinPath`, roda o OpenCover **uma vez por DLL de teste** com `-mergeoutput` acumulando tudo em um único `coverage.xml`, e por fim roda o ReportGenerator uma vez sobre esse XML. As saídas caem em `%LOCALAPPDATA%\apps-cm\test-coverage\saida\` (`coverage.xml`, `coverage-report/index.htm`) — um diretório fixo, não relativo ao diretório de trabalho do processo, para não depender de quem lançou o exe (o Updater do shell, por exemplo, relança sem setar `WorkingDirectory` explicitamente do lado da UI). Retorna o caminho do relatório ou `null`; todo caminho de falha registra no log e retorna `null` em vez de lançar exceção.
 
 O log é um callback `Action<string>` injetado no service. O `MainForm` colore as linhas comparando trechos do texto (`"Passed"` → verde, `"Erro"` → vermelho, etc.), então **mudar o texto de uma mensagem no service altera silenciosamente as cores do log na UI**.
 
 ### Configuração
 
-`configs.json` fica ao lado do executável (`AppContext.BaseDirectory`), criado com um perfil `Default` hardcoded pelo `ProfilesConfig.EnsureConfigExists()` na inicialização. Repare que o `ProfilesConfig.Load()` chama `File.ReadAllText` sem proteção — ele assume que o `EnsureConfigExists()` rodou antes, no `Program.Main`.
+`configs.json` fica em `%LOCALAPPDATA%\apps-cm\test-coverage\configs.json` (ver `CaminhoConfig.cs`), criado com um perfil `Default` hardcoded pelo `ProfilesConfig.EnsureConfigExists()`, chamado de `MainForm.LoadConfig()` — ou seja, roda tanto no `Program.Main` standalone quanto sob o shell, já que o shell nunca invoca este `Program.Main`. Na primeira execução depois de uma instalação antiga, `CaminhoConfig.MigrarSeNecessario()` copia (não move) um `configs.json` legado que estivesse ao lado do exe, validando antes que o schema bate (`Profiles` presente) — isso evita que a config de um outro app do bundle (ex.: `git-submodule-sync`, que também usava esse nome de arquivo no mesmo diretório) seja adotada por engano.
 
-Os caminhos das ferramentas no perfil podem ser relativos; o `CoverageService.ResolveToolPath` os rebaseia a partir do `AppContext.BaseDirectory`. A pasta `Tools/`, que contém o OpenCover e o ReportGenerator, **não está no git e não é copiada por nenhum csproj** — ela existe apenas nas pastas locais de staging `publish/` e `TestCoverageUI/`. Um clone novo compila, mas os caminhos padrão de ferramentas não vão resolver enquanto a `Tools/` não for colocada ao lado do binário.
+Os caminhos das ferramentas no perfil podem ser relativos; o `CoverageService.ResolveToolPath` os rebaseia a partir do `AppContext.BaseDirectory` — que, sob o shell, é a pasta do `AppsCm.exe`, não a deste projeto. A pasta `Tools/`, com o OpenCover e o ReportGenerator embutidos, **está versionada** neste repositório (`TestCoverageUI.UI/Tools/**`) e é copiada automaticamente para bin/publish via `<None Include="Tools\**" CopyToOutputDirectory="PreserveNewest" />` — esse item flui transitivamente para quem referenciar `TestCoverageUI.UI.csproj` via `ProjectReference` (como o `AppsCm.Shell`), então não precisa de nenhum passo extra no shell.
 
 O `CoverageProfile.UseEmbeddedTools` é persistido e habilita/desabilita os botões Browse no `ConfigForm`, mas o `CoverageService` nunca lê esse campo. O `-filter` do OpenCover é montado em tempo de execução a partir de `PrefixDll`/`SuffixDll` — não existe campo de filtro armazenado, apesar do que diz o `readme.md`.
 
-### Fluxo de atualização automática
+### Preloader e $(RaizRepo)
 
-`MainForm_Load` → `UpdateService.CheckForUpdateAsync()` busca o `version.json` na **branch `main` via raw.githubusercontent.com** e compara com a versão do assembly em execução. Se for mais nova, baixa o zip da release para a pasta temp, dispara `Updater.exe <zip> <exePath>` e chama `Environment.Exit(0)`. O Updater fica em polling até o processo principal sumir, extrai por cima do diretório de destino, **pula o próprio nome de arquivo** para não se sobrescrever em uso, e reinicia a aplicação.
+O `TestCoverageUI.UI.csproj` builda o Preloader (`net472`, sem RID/publish, porque ele roda sob o profiler do OpenCover) via um target `BeforeTargets="PrepareForBuild"` e inclui o `.exe` resultante como item dinâmico `BeforeTargets="AssignTargetPaths"` — precisa ser dinâmico (não um `<None>` estático) porque o arquivo ainda não existe quando o csproj é avaliado, e precisa ser antes de `AssignTargetPaths` para fluir transitivamente a quem referencia este projeto (o shell). Os caminhos usam `$(MSBuildThisFileDirectory)..\`, não `$(SolutionDir)` — `$(SolutionDir)` resolveria para o `.sln` que está dirigindo o build no momento (`TestCoverageUI.sln` num build standalone, mas `AppsCm.sln` quando o shell builda este projeto via `ProjectReference`), quebrando o caminho no segundo caso.
 
-O `TestCoverageUI.UI.csproj` tem um target `AfterTargets="Build"` que roda `dotnet publish` do Updater para `publish-updater/` e copia o `Updater.exe` para o diretório de saída — ou seja, o Updater é recompilado a cada build da UI, e um csproj quebrado do Updater quebra o build da UI.
+### Auto-update
 
-### Publicando uma nova versão
+Não existe mais neste repositório. Antes o `TestCoverageUI.Updater` e o `UpdateService` cuidavam disso; agora só o **apps-cm** (o shell) se atualiza — um único `AppsCm.exe`, uma única versão, um único fluxo de update para todos os apps do bundle. Ver `apps-cm/CLAUDE.md` (ou o `Release.ps1` na raiz do apps-cm) para o fluxo de release.
 
-O número de versão precisa ser atualizado em **três** lugares, ou o fluxo de atualização se comporta mal:
+### Versionamento
 
-1. `TestCoverageUI.UI/TestCoverageUI.UI.csproj` (`Version`/`AssemblyVersion`/`FileVersion`)
-2. `TestCoverageUI.Services/TestCoverageUI.Services.csproj` — **crítico**: o `VersionHelper.GetCurrentVersion()` usa `Assembly.GetExecutingAssembly()`, que resolve para o assembly de *Services*, não o da UI. Se a versão do Services ficar para trás, o app compara contra o número errado e volta a oferecer uma atualização que já foi instalada.
-3. `version.json` na raiz do repositório, mais uma release no GitHub naquela tag contendo o `TestCoverageUI.zip`.
+A versão vem de um único `Directory.Build.props` na raiz deste repositório (`<Version>`/`<AssemblyVersion>`/`<FileVersion>`), aplicado a todos os projetos automaticamente — não precisa mais ser duplicada manualmente em cada `.csproj` (esse era o bug antigo: o `VersionHelper` do updater lia a versão do assembly *Services*, que podia ficar dessincronizada da versão do assembly *UI*). Essa versão identifica apenas este submódulo (aparece, por exemplo, no título de janela ou em logs) — ela não é comparada com nada; quem decide se há atualização disponível é o shell, comparando a versão *dele*, não a deste projeto.
 
 ## Convenções
 
-- **Indentação de 2 espaços**; `Nullable` e `ImplicitUsings` habilitados em todos os projetos.
+- **Indentação de 2 espaços**; `Nullable`, `ImplicitUsings` e `LangVersion=latest` habilitados via `Directory.Build.props`.
 - O código é em **português (pt-BR)**: textos de UI, mensagens de log, mensagens de exceção, comentários e mensagens de commit. Os nomes de métodos misturam português e inglês (`ApagarDllsComFiltro`, `GenerateCoverageAsync`) — siga o padrão do arquivo em que você está mexendo, em vez de tentar normalizar.
 - Os arquivos do designer do WinForms (`*.Designer.cs`) podem ser editados à mão, mas são regravados pelo designer do Visual Studio; prefira colocar lógica no `.cs` correspondente.

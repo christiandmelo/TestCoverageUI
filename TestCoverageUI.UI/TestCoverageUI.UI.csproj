@@ -3,25 +3,21 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
-    <ImplicitUsings>enable</ImplicitUsings>
     <StartupObject>TestCoverageUI.UI.Program</StartupObject>
     <PackageIcon>Icone_Logo_png.png</PackageIcon>
     <AssemblyName>TestCoverageUI</AssemblyName>
     <ApplicationIcon>Resources\Icone_Logo_ico.ico</ApplicationIcon>
-    <Version>1.0.4</Version>
-    <AssemblyVersion>1.0.4</AssemblyVersion>
-    <FileVersion>1.0.4</FileVersion>
-    <!-- O pacote Microsoft.Web.WebView2 referencia a variante WPF (WindowsBase) mesmo em projetos
-         WinForms; o WindowsBase 4.0.0.0 escolhido automaticamente é o correto, o aviso é ruído -->
-    <NoWarn>$(NoWarn);MSB3277</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RaizRepo>$(MSBuildThisFileDirectory)..\</RaizRepo>
   </PropertyGroup>
 
   <ItemGroup>
     <Content Include="Resources\Icone_Logo_ico.ico" />
 
-    <!-- OpenCover e ReportGenerator embutidos, e uma cópia solta do ícone; versionados aqui e
+    <!-- OpenCover e ReportGenerator embutidos, e uma cï¿½pia solta do ï¿½cone; versionados aqui e
          copiados automaticamente para bin/publish, sem precisar de passo manual de empacotamento -->
     <None Include="Tools\**" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Resources\Icone_Logo_ico.ico" Link="Icone\Icone_Logo_ico.ico" CopyToOutputDirectory="PreserveNewest" />
@@ -43,30 +39,21 @@
     </None>
   </ItemGroup>
 
-  <Target Name="CopyUpdaterAfterBuild" AfterTargets="Build">
-    <!-- Publica o Updater -->
-    <Exec Command="dotnet publish &quot;$(SolutionDir)TestCoverageUI.Updater\TestCoverageUI.Updater.csproj&quot; -c $(Configuration) -r win-x64 --self-contained false /p:PublishSingleFile=true -o &quot;$(SolutionDir)publish-updater&quot;" />
-
-    <!-- Copia o Updater.exe publicado para a pasta bin do TestCoverageUI -->
-    <Copy SourceFiles="$(SolutionDir)publish-updater\Updater.exe" DestinationFolder="$(OutDir)" />
+  <!-- Builda o Preloader (net472, sem publish/RID pois roda sob o profiler do OpenCover) antes do
+       build principal, e inclui o exe resultante como item dinï¿½mico. Precisa ser BeforeTargets
+       AssignTargetPaths (nï¿½o um ItemGroup estï¿½tico) para que o arquivo jï¿½ exista quando o glob for
+       avaliado, e para que flua transitivamente a quem referenciar este projeto (ex.: o shell). -->
+  <Target Name="CompilarPreloader" BeforeTargets="PrepareForBuild">
+    <Exec Command="dotnet build &quot;$(RaizRepo)TestCoverageUI.Preloader\TestCoverageUI.Preloader.csproj&quot; -c $(Configuration)" />
   </Target>
 
-  <Target Name="CopyPreloaderAfterBuild" AfterTargets="Build">
-    <!-- Builda o Preloader (net472, sem publish/RID pois roda sob o profiler do OpenCover) -->
-    <Exec Command="dotnet build &quot;$(SolutionDir)TestCoverageUI.Preloader\TestCoverageUI.Preloader.csproj&quot; -c $(Configuration)" />
-
-    <!-- Copia o Preloader.exe compilado para a pasta bin do TestCoverageUI -->
-    <Copy SourceFiles="$(SolutionDir)TestCoverageUI.Preloader\bin\$(Configuration)\net472\Preloader.exe" DestinationFolder="$(OutDir)" />
-  </Target>
-
-  <!-- $(OutDir) (usado acima) não é copiado para a pasta de "dotnet publish" automaticamente;
-       sem estes dois targets extras, o publish sai sem Updater.exe/Preloader.exe -->
-  <Target Name="CopyUpdaterAfterPublish" AfterTargets="Publish">
-    <Copy SourceFiles="$(SolutionDir)publish-updater\Updater.exe" DestinationFolder="$(PublishDir)" />
-  </Target>
-
-  <Target Name="CopyPreloaderAfterPublish" AfterTargets="Publish">
-    <Copy SourceFiles="$(SolutionDir)TestCoverageUI.Preloader\bin\$(Configuration)\net472\Preloader.exe" DestinationFolder="$(PublishDir)" />
+  <Target Name="IncluirPreloaderNaSaida" BeforeTargets="AssignTargetPaths" DependsOnTargets="CompilarPreloader">
+    <ItemGroup>
+      <None Include="$(RaizRepo)TestCoverageUI.Preloader\bin\$(Configuration)\net472\Preloader.exe">
+        <Link>Preloader.exe</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
   </Target>
 
 </Project>

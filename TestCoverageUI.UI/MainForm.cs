@@ -19,6 +19,7 @@ namespace TestCoverageUI.UI
 
     private void LoadConfig()
     {
+      ProfilesConfig.EnsureConfigExists();
       _profilesConfig = ProfilesConfig.Load();
       comboProfiles.Items.Clear();
 
@@ -160,39 +161,6 @@ namespace TestCoverageUI.UI
         {
           LoadConfig();
         }
-      }
-    }
-
-    private async void MainForm_Load(object sender, EventArgs e)
-    {
-      var updater = new UpdateService();
-
-      try
-      {
-        var updateInfo = await updater.CheckForUpdateAsync();
-
-        if (updateInfo != null)
-        {
-          var result = MessageBox.Show(
-              $"Nova versão disponível ({updateInfo.version}). Deseja atualizar agora?",
-              "Atualização disponível",
-              MessageBoxButtons.YesNo,
-              MessageBoxIcon.Question
-          );
-
-          if (result == DialogResult.Yes)
-          {
-            await updater.DownloadAndRunUpdaterAsync(updateInfo.url);
-          }
-        }
-      }
-      catch (FileNotFoundException ex)
-      {
-        MessageBox.Show(ex.Message, "Erro de atualização", MessageBoxButtons.OK, MessageBoxIcon.Error);
-      }
-      catch (Exception ex)
-      {
-        MessageBox.Show($"Erro inesperado: {ex.Message}", "Erro de atualização", MessageBoxButtons.OK, MessageBoxIcon.Error);
       }
     }
 
